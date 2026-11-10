@@ -22,7 +22,7 @@ jobs:
     env:
       TEST_POSTGRES_URL: postgresql://napominator:napominator@localhost:5432/napominator_test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
@@ -35,5 +35,5 @@ jobs:
     runs-on: ubuntu-latest
     needs: check
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: docker build -t napominator:ci .
