@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: napominator
+          POSTGRES_PASSWORD: napominator
+          POSTGRES_DB: napominator_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U napominator"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_POSTGRES_URL: postgresql://napominator:napominator@localhost:5432/napominator_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: make check
+      - name: Dependency audit
+        run: make audit
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: check
+    if: hashFiles('Dockerfile') != ''
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t napominator:ci .

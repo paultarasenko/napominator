@@ -1,0 +1,42 @@
+# NOTE: written but not run in the development environment (no Docker there).
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: napominator
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: napominator
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U napominator -d napominator"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    mem_limit: 256m
+
+  migrate:
+    build: .
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql://napominator:${POSTGRES_PASSWORD}@postgres:5432/napominator
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  bot:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://napominator:${POSTGRES_PASSWORD}@postgres:5432/napominator
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    stop_grace_period: 40s  # the dispatcher finishes in-flight sends before exiting
+    mem_limit: 512m
+
+volumes:
+  pgdata:
