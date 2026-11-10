@@ -23,7 +23,7 @@ jobs:
       TEST_POSTGRES_URL: postgresql://napominator:napominator@localhost:5432/napominator_test
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uv sync --locked --python 3.12
